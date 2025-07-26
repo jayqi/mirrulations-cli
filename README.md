@@ -2,7 +2,7 @@
 
 A command-line tool for working with dockets from regulations.gov via the [Mirrulations dataset](https://registry.opendata.aws/mirrulations/).
 
-This tool currently has two commands that wrap two scripts:
+This tool currently has two commands that wrap two existing scripts:
 
 - `mirrulations fetch` — Download all data for a specific docket by ID. See [documentation](https://github.com/mirrulations/mirrulations-fetch/).
 - `mirrulations csv` — Reformat comments data as a tabular CSV file. See [documentation](https://github.com/mirrulations/mirrulations-csv).
