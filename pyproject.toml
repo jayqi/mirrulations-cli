@@ -1,6 +1,6 @@
 [project]
 name = "mirrulations"
-version = "0.1.1"
+version = "0.1.2"
 description = "A utility tool for accessing data from the Mirrulations dataset."
 readme = "README.md"
 authors = [
