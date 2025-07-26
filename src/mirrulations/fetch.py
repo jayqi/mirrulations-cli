@@ -97,8 +97,9 @@ def download_worker(q, stats, totals, start_times, base_prefix, output_folder):
 @click.command("fetch")
 @click.argument('docket_id')
 @click.option('--output-folder', default='.', help='Target output folder (default: current directory)')
+@click.option('--exclude', multiple=True, help="Exclude specifc file types from download. Options: docket, documents, comments, derived")
 @click.option('--include-binary', is_flag=True, help='Include binary data in download')
-def main(docket_id, output_folder, include_binary):
+def main(docket_id, output_folder, exclude, include_binary):
     agency = get_agency(docket_id)
     # S3 prefixes
     raw_agency_docket_prefix = f'{RAW_DATA_PREFIX}/{agency}/{docket_id}/'
@@ -114,23 +115,35 @@ def main(docket_id, output_folder, include_binary):
     print("Preparing download lists...")
     file_lists = {}
     total_sizes = {}
-    file_lists['docket'], total_sizes['docket'] = get_file_list(f'{RAW_DATA_PREFIX}/{agency}/{docket_id}/text-{docket_id}/docket/', 'docket')
-    print(f"Docket total size:   {total_sizes['docket']/1e6:.2f} MB")
-    file_lists['documents'], total_sizes['documents'] = get_file_list(f'{RAW_DATA_PREFIX}/{agency}/{docket_id}/text-{docket_id}/documents/', 'documents')
-    print(f"Document total size: {total_sizes['documents']/1e6:.2f} MB")
-    file_lists['comments'], total_sizes['comments'] = get_file_list(f'{RAW_DATA_PREFIX}/{agency}/{docket_id}/text-{docket_id}/comments/', 'comments')
-    print(f"Comment total size:  {total_sizes['comments']/1e6:.2f} MB")
-    if s3_key_exists(derived_prefix):
-        file_lists['derived'], total_sizes['derived'] = get_file_list(derived_prefix, 'derived')
-        print(f"Derived total size:  {total_sizes['derived']/1e6:.2f} MB")
+    if 'docket' not in exclude:
+        file_lists['docket'], total_sizes['docket'] = get_file_list(f'{RAW_DATA_PREFIX}/{agency}/{docket_id}/text-{docket_id}/docket/', 'docket')
+        print(f"Docket total size:   {total_sizes['docket']/1e6:.2f} MB")
     else:
-        print("Derived data not found - skipping")
+        print("Skipping docket data download")
+    if 'documents' not in exclude:
+        file_lists['documents'], total_sizes['documents'] = get_file_list(f'{RAW_DATA_PREFIX}/{agency}/{docket_id}/text-{docket_id}/documents/', 'documents')
+        print(f"Document total size: {total_sizes['documents']/1e6:.2f} MB")
+    else:
+        print("Skipping document data download due to --exclude")
+    if 'comments' not in exclude:
+        file_lists['comments'], total_sizes['comments'] = get_file_list(f'{RAW_DATA_PREFIX}/{agency}/{docket_id}/text-{docket_id}/comments/', 'comments')
+        print(f"Comment total size:  {total_sizes['comments']/1e6:.2f} MB")
+    else:
+        print("Skipping comment data download due to --exclude")
+    if 'derived' not in exclude:
+        if s3_key_exists(derived_prefix):
+            file_lists['derived'], total_sizes['derived'] = get_file_list(derived_prefix, 'derived')
+            print(f"Derived total size:  {total_sizes['derived']/1e6:.2f} MB")
+        else:
+            print("Derived data not found - skipping")
+    else:
+        print("Skipping derived data download due to --exclude")
     if include_binary and s3_key_exists(raw_binary_prefix):
         file_lists['binary'], total_sizes['binary'] = get_file_list(raw_binary_prefix, 'binary')
         print(f"Binary total size:   {total_sizes['binary']/1e6:.2f} MB")
     # Stats
     totals = {
-        'text': len(file_lists['docket']) + len(file_lists['documents']) + len(file_lists['comments'])
+        'text': len(file_lists.get('docket', [])) + len(file_lists.get('documents', [])) + len(file_lists.get('comments', []))
     }
     if 'derived' in file_lists:
         totals['text'] += len(file_lists['derived'])

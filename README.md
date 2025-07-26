@@ -16,3 +16,13 @@ mirrulations fetch CMS-2019-0039
 # Transform comments into a CSV to ./CMS-2019-0039.csv
 mirrulations csv CMS-2019-0039/raw-data/comments/
 ```
+
+## Excluding file types
+
+`mirrulations fetch` supports a multiple use `--exclude` flag to exclude certain file types. By default, the following types are downloaded: `docket`, `documents`, `comments`, `derived`.
+
+For example, to exclude `comments` and `derived` and to only include `docket` and `documents`:
+
+```bash
+mirrulations fetch CMS-2019-0039 --exclude comments --exclude derived
+```
